@@ -33,6 +33,13 @@
 - Lightweight — no performance impact
 - Compatible with **all Android versions**
 - No modifications to system partitions (fully reversible)
+- Optimized and tested on devices with **1080 × 2340** pixels
+
+## How it was ported
+
+Modern Android versions support **offset functions** in boot animations — frames are positioned relative to the screen center. Older ROMs and custom recoveries don't understand this and render the animation incorrectly.
+
+To fix this, a custom script was written that processes every single frame individually and bakes the position directly into each frame — stabilizing and fixing the animation so it displays correctly on all Android versions and ROMs.
 
 ---
 
