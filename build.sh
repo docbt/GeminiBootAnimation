@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Build script — generates all GeminiBootAnimation variant zips
+# Files are stored once and copied to target paths by the install script.
 # Usage: ./build.sh
 set -e
 
@@ -11,8 +12,8 @@ ANIM="system/media/bootanimation.zip"
 ANIM_DARK="system/media/bootanimation-dark.zip"
 
 build_variant() {
-    local NAME="$1"       # e.g. standard
-    local DESC="$2"       # description for module.prop
+    local NAME="$1"        # e.g. standard
+    local DESC="$2"        # description for module.prop
     local EXTRA_PATHS="$3" # space-separated extra target dirs (relative, no leading slash)
 
     local TMPDIR
@@ -28,59 +29,42 @@ build_variant() {
     sed "s|^description=.*|description=${DESC}|" module.prop \
         > "$TMPDIR/module.prop"
 
-    # Always install to product/media (Android 9+, higher priority)
-    mkdir -p "$TMPDIR/product/media"
-    cp "$ANIM"      "$TMPDIR/product/media/bootanimation.zip"
-    cp "$ANIM_DARK" "$TMPDIR/product/media/bootanimation-dark.zip"
+    # Store animation files only once
+    mkdir -p "$TMPDIR/files"
+    cp "$ANIM"      "$TMPDIR/files/bootanimation.zip"
+    cp "$ANIM_DARK" "$TMPDIR/files/bootanimation-dark.zip"
 
-    # Always install to system/media (fallback)
-    mkdir -p "$TMPDIR/system/media"
-    cp "$ANIM"      "$TMPDIR/system/media/bootanimation.zip"
-    cp "$ANIM_DARK" "$TMPDIR/system/media/bootanimation-dark.zip"
-
-    # Extra variant-specific paths
+    # Build install paths list: always product/media + system/media, plus extras
+    local ALL_PATHS="product/media system/media"
     for EXTRA in $EXTRA_PATHS; do
-        mkdir -p "$TMPDIR/$EXTRA"
-        cp "$ANIM"      "$TMPDIR/$EXTRA/bootanimation.zip"
-        cp "$ANIM_DARK" "$TMPDIR/$EXTRA/bootanimation-dark.zip"
+        ALL_PATHS="$ALL_PATHS $EXTRA"
     done
 
-    # Build update-binary
-    local PERM_LINES="set_perm_recursive \"\$MODPATH/product/media\" root root 0755 0644"$'\n'
-    PERM_LINES+="  set_perm_recursive \"\$MODPATH/system/media\" root root 0755 0644"
-    for EXTRA in $EXTRA_PATHS; do
-        PERM_LINES+=$'\n'"  set_perm_recursive \"\$MODPATH/${EXTRA}\" root root 0755 0644"
-    done
-
-    # Collect all top-level dirs to extract
-    local DIRS="product/* system/*"
-    for EXTRA in $EXTRA_PATHS; do
-        DIRS+=" $(echo "$EXTRA" | cut -d/ -f1)/*"
-    done
-
-    cat > "$TMPDIR/META-INF/com/google/android/update-binary" <<SCRIPT
+    # Build update-binary — extract once, cp to each target path
+    cat > "$TMPDIR/META-INF/com/google/android/update-binary" <<'HEADER'
 #!/sbin/sh
 SKIPUNZIP=1
-unzip -o "\$ZIPFILE" 'product/*' -d "\$MODPATH"
-unzip -o "\$ZIPFILE" 'system/*' -d "\$MODPATH"
-SCRIPT
 
-    for EXTRA in $EXTRA_PATHS; do
-        local TOP
-        TOP=$(echo "$EXTRA" | cut -d/ -f1)
-        echo "unzip -o \"\$ZIPFILE\" '${TOP}/*' -d \"\$MODPATH\"" \
-            >> "$TMPDIR/META-INF/com/google/android/update-binary"
+# Extract source files
+unzip -o "$ZIPFILE" 'files/*' -d "$MODPATH"
+HEADER
+
+    for TARGET in $ALL_PATHS; do
+        cat >> "$TMPDIR/META-INF/com/google/android/update-binary" <<SCRIPT
+mkdir -p "\$MODPATH/${TARGET}"
+cp "\$MODPATH/files/bootanimation.zip"      "\$MODPATH/${TARGET}/bootanimation.zip"
+cp "\$MODPATH/files/bootanimation-dark.zip" "\$MODPATH/${TARGET}/bootanimation-dark.zip"
+SCRIPT
     done
 
-    cat >> "$TMPDIR/META-INF/com/google/android/update-binary" <<SCRIPT
-set_perm_recursive "\$MODPATH/product/media" root root 0755 0644
-set_perm_recursive "\$MODPATH/system/media" root root 0755 0644
-SCRIPT
+    cat >> "$TMPDIR/META-INF/com/google/android/update-binary" <<'FOOTER'
 
-    for EXTRA in $EXTRA_PATHS; do
-        echo "set_perm_recursive \"\$MODPATH/${EXTRA}\" root root 0755 0644" \
-            >> "$TMPDIR/META-INF/com/google/android/update-binary"
-    done
+# Remove source dir — not needed on device
+rm -rf "$MODPATH/files"
+
+# Set permissions
+set_perm_recursive "$MODPATH" root root 0755 0644
+FOOTER
 
     # Pack zip
     (cd "$TMPDIR" && zip -r9 - .) > "$OUTZIP"
