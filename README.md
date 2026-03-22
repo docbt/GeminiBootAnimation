@@ -179,7 +179,7 @@ MIUI checks multiple paths simultaneously. Reliable modules must replace the fil
 - `/system_ext/media/bootanimation.zip`
 - `/system/media/theme/bootanimation.zip`
 
-This module only covers `/system/media/`. MIUI users may need to manually copy the file to the additional paths.
+Use the **MIUI variant** of this module — it automatically installs to all required paths.
 
 ### Xiaomi HyperOS (2023+)
 
