@@ -21,7 +21,7 @@
 
 <div align="center">
 
-> *Replace `preview/preview.gif` with your actual animation preview*
+![Preview](preview/preview.gif)
 
 </div>
 
