@@ -31,7 +31,7 @@
 - Clean and modern animated splash screen
 - Seamlessly integrates with the system via Magisk/KernelSU/APatch
 - Lightweight — no performance impact
-- Compatible with **all Android versions**
+- Compatible with **Android 9+**
 - No modifications to system partitions (fully reversible)
 - Optimized and tested on devices with **1080 × 2340** pixels
 
@@ -48,14 +48,36 @@ To fix this, a custom script was written that processes every single frame indiv
 | Requirement | Details |
 |---|---|
 | Root Solution | Magisk **v20.4+** / KernelSU / APatch |
-| Android Version | All versions supported |
+| Android Version | Android 9+ |
 | Architecture | arm64-v8a, armeabi-v7a |
+
+---
+
+## Download — Which ZIP do I need?
+
+Three variants are available in [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest):
+
+| File | For |
+|---|---|
+| `GeminiBootAnimation-standard-*.zip` | **Google Pixel**, stock Android, OnePlus, Realme, most AOSP-based ROMs |
+| `GeminiBootAnimation-MIUI-*.zip` | **Xiaomi** devices running **MIUI** |
+| `GeminiBootAnimation-MTK-*.zip` | Devices with **MediaTek (MTK)** chipsets on stock firmware |
+
+> **Not sure?** Start with the **standard** variant. If the animation doesn't appear after reboot, try the variant matching your chipset or ROM.
+
+### Which paths does each variant cover?
+
+| Variant | Paths installed |
+|---|---|
+| standard | `/product/media/` · `/system/media/` |
+| MIUI | `/product/media/` · `/system/media/` · `/system_ext/media/` · `/system/media/theme/` |
+| MTK | `/product/media/` · `/system/media/` · `/custom/media/` |
 
 ---
 
 ## Installation
 
-Download the latest `.zip` from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest), then follow the instructions for your root solution below.
+Download the correct `.zip` for your device from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest), then follow the instructions for your root solution below.
 
 ### Magisk
 
