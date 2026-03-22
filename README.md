@@ -50,21 +50,34 @@
 
 ## Installation
 
-### Via Magisk / KernelSU / APatch Manager (Recommended)
+Download the latest `.zip` from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest), then follow the instructions for your root solution below.
 
-1. Download the latest `.zip` from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest)
-2. Open your root manager app (Magisk / KernelSU / APatch)
-3. Go to **Modules** → **Install from storage**
-4. Select the downloaded `.zip`
-5. **Reboot** your device
-6. Enjoy the new boot animation!
+### Magisk
 
-### Via TWRP / Custom Recovery
+1. Open the **Magisk** app
+2. Tap the **Modules** tab at the bottom
+3. Tap **Install from storage**
+4. Navigate to the downloaded `.zip` and select it
+5. Wait for the installation to finish
+6. Tap **Reboot**
 
-1. Download the latest `.zip` from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest)
-2. Boot into recovery
-3. Flash the `.zip`
-4. **Reboot** your device
+### KernelSU
+
+1. Open the **KernelSU** app
+2. Tap the **Module** tab at the bottom
+3. Tap the **+** button in the top right corner
+4. Navigate to the downloaded `.zip` and select it
+5. Wait for the installation to finish
+6. Tap **Reboot**
+
+### APatch
+
+1. Open the **APatch** app
+2. Tap **Modules** in the navigation
+3. Tap the **+** button
+4. Navigate to the downloaded `.zip` and select it
+5. Wait for the installation to finish
+6. Tap **Reboot**
 
 ---
 
