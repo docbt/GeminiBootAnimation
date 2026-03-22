@@ -1,7 +1,0 @@
-id=GeminiBootAnimation
-name=Gemini Boot Animation
-version=v1.0.0
-versionCode=1
-author=docbt
-description=The Gemini Boot Animation from the Google Pixel 10 — ported for all Android devices.
-updateJson=https://raw.githubusercontent.com/docbt/GeminiBootAnimation/main/update.json
