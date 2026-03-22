@@ -107,6 +107,68 @@ Your original boot animation will be automatically restored.
 
 ---
 
+## Device-Specific Notes
+
+This module places `bootanimation.zip` at `/system/media/` — the standard AOSP path.
+Android checks paths in this priority order:
+
+1. `/apex/com.android.bootanimation/etc/bootanimation.zip` *(Android 10+)*
+2. `/oem/media/bootanimation.zip`
+3. `/product/media/bootanimation.zip` *(Android 9+)*
+4. `/system/media/bootanimation.zip` ← **this module**
+
+Depending on your device and ROM, a file in a higher-priority path may take precedence.
+The following manufacturers are known to use non-standard paths or proprietary formats:
+
+### Samsung (One UI)
+
+Samsung does **not** use `bootanimation.zip`. Instead, it uses a proprietary **QMG format**:
+
+- `/system/media/bootsamsung.qmg` — plays once at boot
+- `/system/media/bootsamsungloop.qmg` — loops until boot is complete
+
+This module **will not work** on stock Samsung One UI firmware. It may work on Samsung devices running a custom ROM (GSI or AOSP-based).
+
+### Huawei / EMUI / HarmonyOS
+
+Huawei uses a non-standard path and a proprietary rendering pipeline:
+
+- EMUI: `/system/etc/media/` or `/data/cust/media/`
+- HarmonyOS: proprietary pipeline — standard `bootanimation.zip` replacement is generally **ineffective**
+
+This module is **not compatible** with Huawei/HarmonyOS devices.
+
+### Motorola
+
+Boot animations on Motorola devices are stored on a dedicated OEM partition at `/oem/media/bootanimation.zip`, which is a separate block device — not `/system/media/`. Replacing the file in `/system/media/` has no effect on stock Motorola firmware.
+
+This module will **likely not work** on stock Motorola firmware.
+
+### Xiaomi MIUI
+
+MIUI checks multiple paths simultaneously. Reliable modules must replace the file in all of them:
+
+- `/system/media/bootanimation.zip`
+- `/system/product/media/bootanimation.zip`
+- `/system_ext/media/bootanimation.zip`
+- `/system/media/theme/bootanimation.zip`
+
+This module only covers `/system/media/`. MIUI users may need to manually copy the file to the additional paths.
+
+### Xiaomi HyperOS (2023+)
+
+HyperOS may bypass the standard bootanimation lookup entirely. Even replacing all known paths does not guarantee the animation plays. A dedicated Magisk module with `post-fs-data.sh` hooks may be required.
+
+### MediaTek (MTK) devices
+
+MTK vendor builds add an additional high-priority path checked **before** all standard paths:
+
+- `/custom/media/bootanimation.zip`
+
+If this file exists on your device, it will override what this module installs. Removing or replacing it manually may be necessary.
+
+---
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
