@@ -109,15 +109,19 @@ Your original boot animation will be automatically restored.
 
 ## Device-Specific Notes
 
-This module places `bootanimation.zip` at `/system/media/` — the standard AOSP path.
+This module installs `bootanimation.zip` to **both** paths for maximum compatibility:
+
+- `/product/media/bootanimation.zip` — higher priority (Android 9+, Pixel, most modern devices)
+- `/system/media/bootanimation.zip` — fallback for older devices and ROMs
+
 Android checks paths in this priority order:
 
 1. `/apex/com.android.bootanimation/etc/bootanimation.zip` *(Android 10+)*
 2. `/oem/media/bootanimation.zip`
-3. `/product/media/bootanimation.zip` *(Android 9+)*
-4. `/system/media/bootanimation.zip` ← **this module**
+3. `/product/media/bootanimation.zip` ← **this module (primary)**
+4. `/system/media/bootanimation.zip` ← **this module (fallback)**
 
-Depending on your device and ROM, a file in a higher-priority path may take precedence.
+Depending on your device and ROM, a file in a higher-priority path may still take precedence.
 The following manufacturers are known to use non-standard paths or proprietary formats:
 
 ### Samsung (One UI)
