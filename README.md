@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![Gemini Boot Animation](preview/preview.gif)
-
 [![GitHub Release](https://img.shields.io/github/v/release/docbt/GeminiBootAnimation?style=for-the-badge&logo=github&color=4285F4)](https://github.com/docbt/GeminiBootAnimation/releases/latest)
 [![Android](https://img.shields.io/badge/Android-All%20Versions-3DDC84?style=for-the-badge&logo=android)](https://github.com/docbt/GeminiBootAnimation)
 [![Magisk](https://img.shields.io/badge/Magisk-Compatible-black?style=for-the-badge)](https://github.com/topjohnwu/Magisk)
