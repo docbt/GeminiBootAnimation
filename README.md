@@ -31,7 +31,7 @@
 - Clean and modern animated splash screen
 - Seamlessly integrates with the system via Magisk/KernelSU/APatch
 - Lightweight — no performance impact
-- Compatible with **all Android versions**
+- Compatible with **Android 9+**
 - No modifications to system partitions (fully reversible)
 - Optimized and tested on devices with **1080 × 2340** pixels
 
@@ -48,14 +48,36 @@ To fix this, a custom script was written that processes every single frame indiv
 | Requirement | Details |
 |---|---|
 | Root Solution | Magisk **v20.4+** / KernelSU / APatch |
-| Android Version | All versions supported |
+| Android Version | Android 9+ |
 | Architecture | arm64-v8a, armeabi-v7a |
+
+---
+
+## Download — Which ZIP do I need?
+
+Three variants are available in [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest):
+
+| File | For |
+|---|---|
+| `GeminiBootAnimation-standard-*.zip` | **Google Pixel**, stock Android, OnePlus, Realme, most AOSP-based ROMs |
+| `GeminiBootAnimation-MIUI-*.zip` | **Xiaomi** devices running **MIUI** |
+| `GeminiBootAnimation-MTK-*.zip` | Devices with **MediaTek (MTK)** chipsets on stock firmware |
+
+> **Not sure?** Start with the **standard** variant. If the animation doesn't appear after reboot, try the variant matching your chipset or ROM.
+
+### Which paths does each variant cover?
+
+| Variant | Paths installed |
+|---|---|
+| standard | `/product/media/` · `/system/media/` |
+| MIUI | `/product/media/` · `/system/media/` · `/system_ext/media/` · `/system/media/theme/` |
+| MTK | `/product/media/` · `/system/media/` · `/custom/media/` |
 
 ---
 
 ## Installation
 
-Download the latest `.zip` from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest), then follow the instructions for your root solution below.
+Download the correct `.zip` for your device from [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest), then follow the instructions for your root solution below.
 
 ### Magisk
 
@@ -109,15 +131,19 @@ Your original boot animation will be automatically restored.
 
 ## Device-Specific Notes
 
-This module places `bootanimation.zip` at `/system/media/` — the standard AOSP path.
+This module installs `bootanimation.zip` to **both** paths for maximum compatibility:
+
+- `/product/media/bootanimation.zip` — higher priority (Android 9+, Pixel, most modern devices)
+- `/system/media/bootanimation.zip` — fallback for older devices and ROMs
+
 Android checks paths in this priority order:
 
 1. `/apex/com.android.bootanimation/etc/bootanimation.zip` *(Android 10+)*
 2. `/oem/media/bootanimation.zip`
-3. `/product/media/bootanimation.zip` *(Android 9+)*
-4. `/system/media/bootanimation.zip` ← **this module**
+3. `/product/media/bootanimation.zip` ← **this module (primary)**
+4. `/system/media/bootanimation.zip` ← **this module (fallback)**
 
-Depending on your device and ROM, a file in a higher-priority path may take precedence.
+Depending on your device and ROM, a file in a higher-priority path may still take precedence.
 The following manufacturers are known to use non-standard paths or proprietary formats:
 
 ### Samsung (One UI)
@@ -153,7 +179,7 @@ MIUI checks multiple paths simultaneously. Reliable modules must replace the fil
 - `/system_ext/media/bootanimation.zip`
 - `/system/media/theme/bootanimation.zip`
 
-This module only covers `/system/media/`. MIUI users may need to manually copy the file to the additional paths.
+Use the **MIUI variant** of this module — it automatically installs to all required paths.
 
 ### Xiaomi HyperOS (2023+)
 
