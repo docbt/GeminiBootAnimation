@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build script — generates all GeminiBootAnimation variant zips
-# v1.2: automatic environment detection (Magisk / KernelSU+SUSFS)
+# v1.3: added Motorola (oem/media) and EMUI (system/etc/media) variants
 # Usage: ./build.sh
 set -e
 
@@ -12,9 +12,10 @@ ANIM="system/media/bootanimation.zip"
 ANIM_DARK="system/media/bootanimation-dark.zip"
 
 build_variant() {
-    local NAME="$1"         # e.g. standard
-    local DESC="$2"         # description for module.prop
-    local EXTRA_DIRS="$3"   # space-separated extra magic-mount dirs (relative)
+    local NAME="$1"              # e.g. standard
+    local DESC="$2"              # description for module.prop
+    local EXTRA_DIRS="$3"        # space-separated extra magic-mount dirs (relative)
+    local SERVICE_EXTRA="$4"     # space-separated extra absolute paths for service.sh try_write
 
     local TMPDIR
     TMPDIR=$(mktemp -d)
@@ -76,6 +77,10 @@ try_write() {
 try_write /product/media
 try_write /system/media
 SERVICESH
+
+    for P in $SERVICE_EXTRA; do
+        echo "try_write ${P}" >> "$TMPDIR/service.sh"
+    done
 
     chmod 755 "$TMPDIR/service.sh"
 
@@ -142,16 +147,29 @@ UBEFOOTER
 # ── Variants ──────────────────────────────────────────────────────────────────
 
 build_variant "standard" \
-    "Gemini Boot Animation v1.2 — Standard (Pixel / AOSP / crDroid / OnePlus / Realme)" \
+    "Gemini Boot Animation v1.3 — Standard (Pixel / AOSP / crDroid / OnePlus / Realme)" \
+    "" \
     ""
 
 build_variant "MIUI" \
-    "Gemini Boot Animation v1.2 — Xiaomi MIUI (all MIUI media paths)" \
-    "system_ext/media system/media/theme"
+    "Gemini Boot Animation v1.3 — Xiaomi MIUI (all MIUI media paths)" \
+    "system_ext/media system/media/theme" \
+    ""
 
 build_variant "MTK" \
-    "Gemini Boot Animation v1.2 — MediaTek (custom/media priority path)" \
-    "custom/media"
+    "Gemini Boot Animation v1.3 — MediaTek (custom/media priority path)" \
+    "custom/media" \
+    ""
+
+build_variant "Motorola" \
+    "Gemini Boot Animation v1.3 — Motorola (oem/media partition path)" \
+    "oem/media" \
+    "/oem/media"
+
+build_variant "EMUI" \
+    "Gemini Boot Animation v1.3 — Huawei EMUI (system/etc/media path)" \
+    "system/etc/media" \
+    "/system/etc/media"
 
 echo ""
 echo "Done. Zips in $OUT/:"

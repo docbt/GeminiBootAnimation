@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.3.0] - 2026-03-23
+
+### Added
+- **Motorola variant** — installs to `/oem/media/` (separate OEM partition used by stock Motorola firmware)
+- **EMUI variant** — installs to `/system/etc/media/` (Huawei EMUI path)
+- `service.sh` extended per variant to also write directly to variant-specific paths on KernelSU + SUSFS setups
+
+---
+
 ## [1.2.0] - 2026-03-23
 
 ### Added

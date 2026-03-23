@@ -55,13 +55,15 @@ To fix this, a custom script was written that processes every single frame indiv
 
 ## Download — Which ZIP do I need?
 
-Three variants are available in [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest):
+Five variants are available in [**Releases**](https://github.com/docbt/GeminiBootAnimation/releases/latest):
 
 | File | For |
 |---|---|
 | `GeminiBootAnimation-standard-*.zip` | **Google Pixel**, stock Android, OnePlus, Realme, most AOSP-based ROMs |
 | `GeminiBootAnimation-MIUI-*.zip` | **Xiaomi** devices running **MIUI** |
 | `GeminiBootAnimation-MTK-*.zip` | Devices with **MediaTek (MTK)** chipsets on stock firmware |
+| `GeminiBootAnimation-Motorola-*.zip` | **Motorola** devices on stock firmware (OEM partition at `/oem/media/`) |
+| `GeminiBootAnimation-EMUI-*.zip` | **Huawei** devices running **EMUI** (`/system/etc/media/`) |
 
 > **Not sure?** Start with the **standard** variant. If the animation doesn't appear after reboot, try the variant matching your chipset or ROM.
 
@@ -72,6 +74,8 @@ Three variants are available in [**Releases**](https://github.com/docbt/GeminiBo
 | standard | `/product/media/` · `/system/media/` |
 | MIUI | `/product/media/` · `/system/media/` · `/system_ext/media/` · `/system/media/theme/` |
 | MTK | `/product/media/` · `/system/media/` · `/custom/media/` |
+| Motorola | `/product/media/` · `/system/media/` · `/oem/media/` |
+| EMUI | `/product/media/` · `/system/media/` · `/system/etc/media/` |
 
 ---
 
@@ -151,7 +155,7 @@ This module installs `bootanimation.zip` to **both** paths for maximum compatibi
 Android checks paths in this priority order:
 
 1. `/apex/com.android.bootanimation/etc/bootanimation.zip` *(Android 10+)*
-2. `/oem/media/bootanimation.zip`
+2. `/oem/media/bootanimation.zip` ← **Motorola variant**
 3. `/product/media/bootanimation.zip` ← **this module (primary)**
 4. `/system/media/bootanimation.zip` ← **this module (fallback)**
 
@@ -174,13 +178,15 @@ Huawei uses a non-standard path and a proprietary rendering pipeline:
 - EMUI: `/system/etc/media/` or `/data/cust/media/`
 - HarmonyOS: proprietary pipeline — standard `bootanimation.zip` replacement is generally **ineffective**
 
-This module is **not compatible** with Huawei/HarmonyOS devices.
+Use the **EMUI variant** for Huawei devices running EMUI — it installs to `/system/etc/media/` in addition to the standard paths.
+
+> **HarmonyOS** is **not supported** — its rendering pipeline is proprietary and does not use `bootanimation.zip`.
 
 ### Motorola
 
 Boot animations on Motorola devices are stored on a dedicated OEM partition at `/oem/media/bootanimation.zip`, which is a separate block device — not `/system/media/`. Replacing the file in `/system/media/` has no effect on stock Motorola firmware.
 
-This module will **likely not work** on stock Motorola firmware.
+Use the **Motorola variant** — it additionally installs to `/oem/media/` so the OEM partition path is covered.
 
 ### Xiaomi MIUI
 
