@@ -136,6 +136,8 @@ The installer detects your root environment at install time and the module adapt
 - **KernelSU + SUSFS** — SUSFS hides Magic Mount overlays from system processes; instead, `service.sh` runs on every boot and writes the animation files directly to the partition (requires dm-verity to be disabled, which is typical on custom ROMs like crDroid)
 
 > **Note:** On KernelSU + SUSFS setups the animation will appear starting from the **second reboot** after installation (first boot: `service.sh` writes the files; second boot: animation plays from partition).
+>
+> Some ROMs ship `bootanimation-dark.zip` as a **symlink** to `bootanimation.zip`. The module handles this automatically — the symlink is replaced with a real file.
 
 ---
 
