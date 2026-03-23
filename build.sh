@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build script — generates all GeminiBootAnimation variant zips
-# Uses post-fs-data.sh bind-mounts for reliable bootanimation replacement.
+# v1.2: automatic environment detection (Magisk / KernelSU+SUSFS)
 # Usage: ./build.sh
 set -e
 
@@ -14,7 +14,7 @@ ANIM_DARK="system/media/bootanimation-dark.zip"
 build_variant() {
     local NAME="$1"         # e.g. standard
     local DESC="$2"         # description for module.prop
-    local EXTRA_DIRS="$3"   # space-separated extra bind-mount dirs (absolute paths)
+    local EXTRA_DIRS="$3"   # space-separated extra magic-mount dirs (relative)
 
     local TMPDIR
     TMPDIR=$(mktemp -d)
@@ -34,60 +34,104 @@ build_variant() {
     cp "$ANIM"      "$TMPDIR/files/bootanimation.zip"
     cp "$ANIM_DARK" "$TMPDIR/files/bootanimation-dark.zip"
 
-    # ── update-binary (installer) ─────────────────────────────────────────────
-    cat > "$TMPDIR/META-INF/com/google/android/update-binary" <<'EOF'
-#!/sbin/sh
-SKIPUNZIP=1
-
-ui_print "- Gemini Boot Animation installer"
-ui_print "  MODPATH: $MODPATH"
-
-# Extract animation files
-unzip -o "$ZIPFILE" 'files/*' -d "$MODPATH" \
-  && ui_print "  Files extracted OK." \
-  || { ui_print "! ERROR: extraction failed"; exit 1; }
-
-# Set permissions
-set_perm_recursive "$MODPATH/files" root root 0755 0644
-set_perm "$MODPATH/post-fs-data.sh" root root 0755
-chmod 755 "$MODPATH/post-fs-data.sh"
-
-ui_print "- Done. post-fs-data.sh will bind-mount on next boot."
-EOF
-
-    # ── post-fs-data.sh (runs before bootanimation, applies bind mounts) ──────
-    # Build list of absolute target directories
-    local ALL_DIRS="/system/media /product/media /system/product/media"
+    # Magic mount dirs — populated by update-binary at install time (not in ZIP)
+    local ALL_DIRS="product/media system/media system/product/media"
     for D in $EXTRA_DIRS; do
         ALL_DIRS="$ALL_DIRS $D"
     done
 
-    cat > "$TMPDIR/post-fs-data.sh" <<POSTFS
+    # ── service.sh ───────────────────────────────────────────────────────────
+    # Fallback for KernelSU + SUSFS setups where magic mount is hidden from
+    # system processes. Tries to write directly to the partition (works when
+    # dm-verity is disabled, e.g. crDroid). Runs after every boot — safe to
+    # call repeatedly (skips if sizes already match).
+    cat > "$TMPDIR/service.sh" <<'SERVICESH'
 #!/sbin/sh
-# Bind-mount Gemini bootanimation over system paths.
-# Runs in post-fs-data phase — before bootanimation service starts.
-MODDIR="\${0%/*}"
-SRC="\$MODDIR/files"
+# Gemini Boot Animation — direct-write fallback for KernelSU+SUSFS setups
+MODDIR="${0%/*}"
+SRC="$MODDIR/files"
 
-bind_anim() {
-    local dir="\$1"
-    [ -d "\$dir" ] || return 0
-    for f in bootanimation.zip bootanimation-dark.zip; do
-        [ -f "\$dir/\$f" ] || continue
-        [ -f "\$SRC/\$f" ]  || continue
-        mount --bind "\$SRC/\$f" "\$dir/\$f" \\
-          && log -t GeminiAnim "bind OK: \$dir/\$f" \\
-          || log -t GeminiAnim "bind FAIL: \$dir/\$f"
-    done
+[ -f "$SRC/bootanimation.zip" ] || exit 0
+
+our_size=$(stat -c %s "$SRC/bootanimation.zip" 2>/dev/null) || exit 0
+
+try_write() {
+    local dir="$1"
+    [ -d "$dir" ] || return 1
+
+    # Skip if already our version
+    cur=$(stat -c %s "$dir/bootanimation.zip" 2>/dev/null) || cur=0
+    [ "$cur" = "$our_size" ] && return 0
+
+    # Attempt remount rw
+    mount -o remount,rw "$dir" 2>/dev/null || return 1
+
+    cp "$SRC/bootanimation.zip"      "$dir/bootanimation.zip"
+    cp "$SRC/bootanimation-dark.zip" "$dir/bootanimation-dark.zip"
+    chmod 644 "$dir/bootanimation.zip" "$dir/bootanimation-dark.zip"
+
+    mount -o remount,ro "$dir" 2>/dev/null || true
 }
 
-POSTFS
+try_write /product/media
+try_write /system/media
+SERVICESH
+
+    chmod 755 "$TMPDIR/service.sh"
+
+    # ── update-binary (installer) ─────────────────────────────────────────────
+    cat > "$TMPDIR/META-INF/com/google/android/update-binary" <<UBEOF
+#!/sbin/sh
+SKIPUNZIP=1
+
+# ── Environment detection ────────────────────────────────────────────────────
+ROOT_IMPL="Magisk"
+SUSFS_ACTIVE=false
+
+if [ "\$KSU" = "true" ]; then
+    ROOT_IMPL="KernelSU"
+    if [ -e "/proc/sys/fs/susfs_enabled" ] || \
+       grep -q "susfs" /proc/version 2>/dev/null || \
+       [ -e "/sys/kernel/sus_su" ]; then
+        SUSFS_ACTIVE=true
+        ROOT_IMPL="KernelSU + SUSFS"
+    fi
+fi
+
+ui_print "- Gemini Boot Animation ${VERSION}"
+ui_print "  Root: \$ROOT_IMPL"
+
+# ── Extract files ────────────────────────────────────────────────────────────
+ui_print "  Extracting..."
+unzip -o "\$ZIPFILE" 'files/*'    -d "\$MODPATH" || { ui_print "! Extract failed"; exit 1; }
+unzip -o "\$ZIPFILE" 'service.sh' -d "\$MODPATH" || { ui_print "! service.sh missing"; exit 1; }
+
+# ── Magic mount structure (copy from files/ to each target dir) ──────────────
+UBEOF
 
     for D in $ALL_DIRS; do
-        echo "bind_anim \"${D}\"" >> "$TMPDIR/post-fs-data.sh"
+        cat >> "$TMPDIR/META-INF/com/google/android/update-binary" <<MMSCRIPT
+ui_print "  -> \$MODPATH/${D}"
+mkdir -p "\$MODPATH/${D}"
+cp "\$MODPATH/files/bootanimation.zip"      "\$MODPATH/${D}/bootanimation.zip"
+cp "\$MODPATH/files/bootanimation-dark.zip" "\$MODPATH/${D}/bootanimation-dark.zip"
+MMSCRIPT
     done
 
-    chmod 755 "$TMPDIR/post-fs-data.sh"
+    cat >> "$TMPDIR/META-INF/com/google/android/update-binary" <<'UBEFOOTER'
+
+# ── Permissions ──────────────────────────────────────────────────────────────
+set_perm_recursive "$MODPATH" root root 0755 0644
+chmod 755 "$MODPATH/service.sh"
+
+# ── Summary ──────────────────────────────────────────────────────────────────
+if [ "$SUSFS_ACTIVE" = "true" ]; then
+    ui_print "  SUSFS detected — service.sh will write directly on first boot"
+else
+    ui_print "  Magic Mount active"
+fi
+ui_print "- Done. Reboot to apply."
+UBEFOOTER
 
     # Pack zip
     (cd "$TMPDIR" && zip -r9 - .) > "$OUTZIP"
@@ -98,16 +142,16 @@ POSTFS
 # ── Variants ──────────────────────────────────────────────────────────────────
 
 build_variant "standard" \
-    "Gemini Boot Animation — Standard (Pixel / AOSP / crDroid / OnePlus / Realme)" \
+    "Gemini Boot Animation v1.2 — Standard (Pixel / AOSP / crDroid / OnePlus / Realme)" \
     ""
 
 build_variant "MIUI" \
-    "Gemini Boot Animation — Xiaomi MIUI (all MIUI media paths)" \
-    "/system_ext/media /system/media/theme"
+    "Gemini Boot Animation v1.2 — Xiaomi MIUI (all MIUI media paths)" \
+    "system_ext/media system/media/theme"
 
 build_variant "MTK" \
-    "Gemini Boot Animation — MediaTek (custom/media priority path)" \
-    "/custom/media"
+    "Gemini Boot Animation v1.2 — MediaTek (custom/media priority path)" \
+    "custom/media"
 
 echo ""
 echo "Done. Zips in $OUT/:"

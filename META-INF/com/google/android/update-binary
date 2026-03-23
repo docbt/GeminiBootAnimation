@@ -1,23 +1,38 @@
 #!/sbin/sh
 SKIPUNZIP=1
 
-ui_print "- Gemini Boot Animation installer"
-ui_print "  MODPATH: $MODPATH"
+# ── Environment detection ────────────────────────────────────────────────────
+ROOT_IMPL="Magisk"
+SUSFS_ACTIVE=false
 
-# Extract animation files
-unzip -o "$ZIPFILE" 'files/*' -d "$MODPATH" \
-  && ui_print "  Files extracted OK." \
-  || { ui_print "! ERROR: extraction failed"; exit 1; }
+if [ "$KSU" = "true" ]; then
+    ROOT_IMPL="KernelSU"
+    if [ -e "/proc/sys/fs/susfs_enabled" ] || \
+       grep -q "susfs" /proc/version 2>/dev/null || \
+       [ -e "/sys/kernel/sus_su" ]; then
+        SUSFS_ACTIVE=true
+        ROOT_IMPL="KernelSU + SUSFS"
+    fi
+fi
 
-# Extract post-fs-data.sh
-unzip -o "$ZIPFILE" 'post-fs-data.sh' -d "$MODPATH" \
-  && ui_print "  post-fs-data.sh installed." \
-  || ui_print "  WARNING: post-fs-data.sh missing in zip"
+ui_print "- Gemini Boot Animation v1.2"
+ui_print "  Root: $ROOT_IMPL"
 
-# Set permissions
-set_perm_recursive "$MODPATH/files" root root 0755 0644
-set_perm "$MODPATH/post-fs-data.sh" root root 0755
-# Explicit chmod as fallback (set_perm may not work on all root impls)
-chmod 755 "$MODPATH/post-fs-data.sh"
+# ── Extract files ────────────────────────────────────────────────────────────
+ui_print "  Extracting..."
+unzip -o "$ZIPFILE" 'files/*'      -d "$MODPATH" || { ui_print "! Extract failed"; exit 1; }
+unzip -o "$ZIPFILE" 'service.sh'   -d "$MODPATH" || { ui_print "! service.sh missing"; exit 1; }
+unzip -o "$ZIPFILE" 'system/*'     -d "$MODPATH" 2>/dev/null || true
+unzip -o "$ZIPFILE" 'product/*'    -d "$MODPATH" 2>/dev/null || true
 
-ui_print "- Done. Bind-mounts will apply on next boot."
+# ── Permissions ──────────────────────────────────────────────────────────────
+set_perm_recursive "$MODPATH" root root 0755 0644
+chmod 755 "$MODPATH/service.sh"
+
+# ── Summary ──────────────────────────────────────────────────────────────────
+if [ "$SUSFS_ACTIVE" = "true" ]; then
+    ui_print "  SUSFS detected — service.sh writes directly on first boot"
+else
+    ui_print "  Magic Mount active"
+fi
+ui_print "- Done. Reboot to apply."

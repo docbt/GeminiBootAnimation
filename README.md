@@ -30,9 +30,9 @@
 - Original Gemini boot animation from the **Google Pixel 10**
 - Clean and modern animated splash screen
 - Seamlessly integrates with the system via Magisk/KernelSU/APatch
+- **Automatic environment detection** — works on standard setups and KernelSU + SUSFS
 - Lightweight — no performance impact
 - Compatible with **Android 9+**
-- No modifications to system partitions (fully reversible)
 - Optimized and tested on devices with **1080 × 2340** pixels
 
 ## How it was ported
@@ -121,11 +121,21 @@ Your original boot animation will be automatically restored.
 
 ## Compatibility
 
-| Root Solution | Status |
-|---|---|
-| Magisk | Tested |
-| KernelSU | Tested |
-| APatch | Tested |
+| Setup | Method | Status |
+|---|---|---|
+| Magisk | Magic Mount | ✅ Tested |
+| KernelSU | Magic Mount | ✅ Tested |
+| KernelSU + SUSFS | Direct write via `service.sh` | ✅ Tested |
+| APatch | Magic Mount | ✅ Tested |
+
+### How automatic detection works (v1.2+)
+
+The installer detects your root environment at install time and the module adapts automatically:
+
+- **Magisk / standard KernelSU** — uses Magic Mount (overlay on `/product/media` and `/system/media`)
+- **KernelSU + SUSFS** — SUSFS hides Magic Mount overlays from system processes; instead, `service.sh` runs on every boot and writes the animation files directly to the partition (requires dm-verity to be disabled, which is typical on custom ROMs like crDroid)
+
+> **Note:** On KernelSU + SUSFS setups the animation will appear starting from the **second reboot** after installation (first boot: `service.sh` writes the files; second boot: animation plays from partition).
 
 ---
 
