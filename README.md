@@ -132,12 +132,14 @@ Your original boot animation will be automatically restored.
 | KernelSU + SUSFS | Direct write via `service.sh` | ✅ Tested |
 | APatch | Magic Mount | ✅ Tested |
 
-### How automatic detection works (v1.2+)
+### How automatic detection works (v1.2+, extended in v1.3)
 
 The installer detects your root environment at install time and the module adapts automatically:
 
 - **Magisk / standard KernelSU** — uses Magic Mount (overlay on `/product/media` and `/system/media`)
 - **KernelSU + SUSFS** — SUSFS hides Magic Mount overlays from system processes; instead, `service.sh` runs on every boot and writes the animation files directly to the partition (requires dm-verity to be disabled, which is typical on custom ROMs like crDroid)
+
+**v1.3:** `service.sh` was extended for the **Motorola** and **EMUI** variants — on KernelSU + SUSFS setups it also writes directly to the variant-specific paths (`/oem/media/` and `/system/etc/media/` respectively).
 
 > **Note:** On KernelSU + SUSFS setups the animation will appear starting from the **second reboot** after installation (first boot: `service.sh` writes the files; second boot: animation plays from partition).
 >
@@ -178,7 +180,7 @@ Huawei uses a non-standard path and a proprietary rendering pipeline:
 - EMUI: `/system/etc/media/` or `/data/cust/media/`
 - HarmonyOS: proprietary pipeline — standard `bootanimation.zip` replacement is generally **ineffective**
 
-Use the **EMUI variant** for Huawei devices running EMUI — it installs to `/system/etc/media/` in addition to the standard paths.
+Use the **EMUI variant** for Huawei devices running EMUI — it installs to `/system/etc/media/` in addition to the standard paths. On KernelSU + SUSFS setups, `service.sh` also writes directly to `/system/etc/media/` (v1.3+).
 
 > **HarmonyOS** is **not supported** — its rendering pipeline is proprietary and does not use `bootanimation.zip`.
 
@@ -186,7 +188,7 @@ Use the **EMUI variant** for Huawei devices running EMUI — it installs to `/sy
 
 Boot animations on Motorola devices are stored on a dedicated OEM partition at `/oem/media/bootanimation.zip`, which is a separate block device — not `/system/media/`. Replacing the file in `/system/media/` has no effect on stock Motorola firmware.
 
-Use the **Motorola variant** — it additionally installs to `/oem/media/` so the OEM partition path is covered.
+Use the **Motorola variant** — it additionally installs to `/oem/media/` so the OEM partition path is covered. On KernelSU + SUSFS setups, `service.sh` also writes directly to `/oem/media/` (v1.3+).
 
 ### Xiaomi MIUI
 
