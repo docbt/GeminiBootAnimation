@@ -1,30 +1,21 @@
 #!/sbin/sh
 SKIPUNZIP=1
 
-ui_print "- Installing Gemini Boot Animation..."
-ui_print "  Module path: $MODPATH"
+ui_print "- Gemini Boot Animation installer"
+ui_print "  MODPATH: $MODPATH"
 
-# Extract source files
-unzip -o "$ZIPFILE" 'system/*' -d "$MODPATH" \
-  && ui_print "  system/ extracted." \
-  || { ui_print "! ERROR: failed to extract system/"; exit 1; }
+# Extract animation files
+unzip -o "$ZIPFILE" 'files/*' -d "$MODPATH" \
+  && ui_print "  Files extracted OK." \
+  || { ui_print "! ERROR: extraction failed"; exit 1; }
 
-unzip -o "$ZIPFILE" 'product/*' -d "$MODPATH" \
-  && ui_print "  product/ extracted." \
-  || ui_print "  (no product/ in zip — skipped)"
+# Extract post-fs-data.sh
+unzip -o "$ZIPFILE" 'post-fs-data.sh' -d "$MODPATH" \
+  && ui_print "  post-fs-data.sh installed." \
+  || ui_print "  WARNING: post-fs-data.sh missing in zip"
 
-# Also populate system/product/media for ROMs where /product is under /system
-ui_print "  -> $MODPATH/system/product/media"
-mkdir -p "$MODPATH/system/product/media"
-cp "$MODPATH/system/media/bootanimation.zip"      "$MODPATH/system/product/media/bootanimation.zip" \
-  || ui_print "  ! copy failed for system/product/media/bootanimation.zip"
-cp "$MODPATH/system/media/bootanimation-dark.zip" "$MODPATH/system/product/media/bootanimation-dark.zip" \
-  || ui_print "  ! copy failed for system/product/media/bootanimation-dark.zip"
+# Set permissions
+set_perm_recursive "$MODPATH/files" root root 0755 0644
+set_perm "$MODPATH/post-fs-data.sh" root root 0755
 
-# Permissions: dirs 0755, files 0644, owner root:root
-set_perm_recursive "$MODPATH" root root 0755 0644
-
-# Fix SELinux context so the bootanimation service can read the files
-chcon -R u:object_r:bootanim_data_file:s0 "$MODPATH" 2>/dev/null || true
-
-ui_print "- Done. Reboot to see the animation."
+ui_print "- Done. Bind-mounts will apply on next boot."
