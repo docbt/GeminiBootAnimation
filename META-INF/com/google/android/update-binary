@@ -1,6 +1,30 @@
 #!/sbin/sh
 SKIPUNZIP=1
-unzip -o "$ZIPFILE" 'system/*' -d "$MODPATH"
-unzip -o "$ZIPFILE" 'product/*' -d "$MODPATH"
-set_perm_recursive "$MODPATH/system/media" root root 0755 0644
-set_perm_recursive "$MODPATH/product/media" root root 0755 0644
+
+ui_print "- Installing Gemini Boot Animation..."
+ui_print "  Module path: $MODPATH"
+
+# Extract source files
+unzip -o "$ZIPFILE" 'system/*' -d "$MODPATH" \
+  && ui_print "  system/ extracted." \
+  || { ui_print "! ERROR: failed to extract system/"; exit 1; }
+
+unzip -o "$ZIPFILE" 'product/*' -d "$MODPATH" \
+  && ui_print "  product/ extracted." \
+  || ui_print "  (no product/ in zip — skipped)"
+
+# Also populate system/product/media for ROMs where /product is under /system
+ui_print "  -> $MODPATH/system/product/media"
+mkdir -p "$MODPATH/system/product/media"
+cp "$MODPATH/system/media/bootanimation.zip"      "$MODPATH/system/product/media/bootanimation.zip" \
+  || ui_print "  ! copy failed for system/product/media/bootanimation.zip"
+cp "$MODPATH/system/media/bootanimation-dark.zip" "$MODPATH/system/product/media/bootanimation-dark.zip" \
+  || ui_print "  ! copy failed for system/product/media/bootanimation-dark.zip"
+
+# Permissions: dirs 0755, files 0644, owner root:root
+set_perm_recursive "$MODPATH" root root 0755 0644
+
+# Fix SELinux context so the bootanimation service can read the files
+chcon -R u:object_r:bootanim_data_file:s0 "$MODPATH" 2>/dev/null || true
+
+ui_print "- Done. Reboot to see the animation."
