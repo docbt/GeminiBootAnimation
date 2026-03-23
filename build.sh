@@ -47,8 +47,10 @@ unzip -o "$ZIPFILE" 'files/*' -d "$MODPATH" \
   && ui_print "  Files extracted OK." \
   || { ui_print "! ERROR: extraction failed"; exit 1; }
 
-# Set permissions on the files directory
+# Set permissions
 set_perm_recursive "$MODPATH/files" root root 0755 0644
+set_perm "$MODPATH/post-fs-data.sh" root root 0755
+chmod 755 "$MODPATH/post-fs-data.sh"
 
 ui_print "- Done. post-fs-data.sh will bind-mount on next boot."
 EOF

@@ -17,5 +17,7 @@ unzip -o "$ZIPFILE" 'post-fs-data.sh' -d "$MODPATH" \
 # Set permissions
 set_perm_recursive "$MODPATH/files" root root 0755 0644
 set_perm "$MODPATH/post-fs-data.sh" root root 0755
+# Explicit chmod as fallback (set_perm may not work on all root impls)
+chmod 755 "$MODPATH/post-fs-data.sh"
 
 ui_print "- Done. Bind-mounts will apply on next boot."
