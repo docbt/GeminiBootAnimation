@@ -100,9 +100,7 @@ SERVICESH
 MODDIR="${0%/*}"
 chmod 777 "$MODDIR/service.sh"
 # Fix permissions in service.d regardless of filename
-for f in /data/adb/service.d/*gemini* /data/adb/service.d/*bootanim*; do
-    [ -f "$f" ] && chmod 777 "$f"
-done
+chmod 777 /data/adb/service.d/bootanim.sh 2>/dev/null || true
 POSTFSSH
     chmod 777 "$TMPDIR/post-fs-data.sh"
 
