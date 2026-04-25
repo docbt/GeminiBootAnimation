@@ -49,7 +49,7 @@ build_variant() {
     cat > "$TMPDIR/service.sh" <<'SERVICESH'
 #!/system/bin/sh
 # Gemini Boot Animation — direct-write fallback for KernelSU+SUSFS setups
-MODDIR="${0%/*}"
+MODDIR="/data/adb/modules/gemini-bootanimation"
 SRC="$MODDIR/files"
 
 [ -f "$SRC/bootanimation.zip" ] || exit 0
