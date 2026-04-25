@@ -89,6 +89,22 @@ try_write() {
 try_write /product/media
 try_write /system/media
 SERVICESH
+    chmod 777 "$TMPDIR/service.sh"
+
+    # ── post-fs-data.sh ──────────────────────────────────────────────────────
+    # KernelSU copies service.sh to /data/adb/service.d/ with 600 permissions.
+    # post-fs-data.sh runs earlier and fixes the permissions before service.sh
+    # is executed.
+    cat > "$TMPDIR/post-fs-data.sh" <<'POSTFSSH'
+#!/system/bin/sh
+MODDIR="${0%/*}"
+chmod 777 "$MODDIR/service.sh"
+# Fix permissions in service.d regardless of filename
+for f in /data/adb/service.d/*gemini* /data/adb/service.d/*bootanim*; do
+    [ -f "$f" ] && chmod 777 "$f"
+done
+POSTFSSH
+    chmod 777 "$TMPDIR/post-fs-data.sh"
 
     for P in $SERVICE_EXTRA; do
         echo "try_write ${P}" >> "$TMPDIR/service.sh"
@@ -120,8 +136,9 @@ ui_print "  Root: \$ROOT_IMPL"
 
 # ── Extract files ────────────────────────────────────────────────────────────
 ui_print "  Extracting..."
-unzip -o "\$ZIPFILE" 'files/*'    -d "\$MODPATH" || { ui_print "! Extract failed"; exit 1; }
-unzip -o "\$ZIPFILE" 'service.sh' -d "\$MODPATH" || { ui_print "! service.sh missing"; exit 1; }
+unzip -o "\$ZIPFILE" 'files/*'           -d "\$MODPATH" || { ui_print "! Extract failed"; exit 1; }
+unzip -o "\$ZIPFILE" 'service.sh'        -d "\$MODPATH" || { ui_print "! service.sh missing"; exit 1; }
+unzip -o "\$ZIPFILE" 'post-fs-data.sh'  -d "\$MODPATH" 2>/dev/null || true
 
 # ── Magic mount structure (copy from files/ to each target dir) ──────────────
 UBEOF

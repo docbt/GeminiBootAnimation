@@ -20,14 +20,16 @@ ui_print "  Root: $ROOT_IMPL"
 
 # ── Extract files ────────────────────────────────────────────────────────────
 ui_print "  Extracting..."
-unzip -o "$ZIPFILE" 'files/*'      -d "$MODPATH" || { ui_print "! Extract failed"; exit 1; }
-unzip -o "$ZIPFILE" 'service.sh'   -d "$MODPATH" || { ui_print "! service.sh missing"; exit 1; }
-unzip -o "$ZIPFILE" 'system/*'     -d "$MODPATH" 2>/dev/null || true
-unzip -o "$ZIPFILE" 'product/*'    -d "$MODPATH" 2>/dev/null || true
+unzip -o "$ZIPFILE" 'files/*'          -d "$MODPATH" || { ui_print "! Extract failed"; exit 1; }
+unzip -o "$ZIPFILE" 'service.sh'       -d "$MODPATH" || { ui_print "! service.sh missing"; exit 1; }
+unzip -o "$ZIPFILE" 'post-fs-data.sh' -d "$MODPATH" 2>/dev/null || true
+unzip -o "$ZIPFILE" 'system/*'         -d "$MODPATH" 2>/dev/null || true
+unzip -o "$ZIPFILE" 'product/*'        -d "$MODPATH" 2>/dev/null || true
 
 # ── Permissions ──────────────────────────────────────────────────────────────
 set_perm_recursive "$MODPATH" root root 0755 0644
 chmod 777 "$MODPATH/service.sh"
+chmod 777 "$MODPATH/post-fs-data.sh"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 if [ "$SUSFS_ACTIVE" = "true" ]; then
