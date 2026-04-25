@@ -94,7 +94,7 @@ SERVICESH
         echo "try_write ${P}" >> "$TMPDIR/service.sh"
     done
 
-    chmod 755 "$TMPDIR/service.sh"
+    chmod 777 "$TMPDIR/service.sh"
 
     # ── update-binary (installer) ─────────────────────────────────────────────
     cat > "$TMPDIR/META-INF/com/google/android/update-binary" <<UBEOF
@@ -139,7 +139,7 @@ MMSCRIPT
 
 # ── Permissions ──────────────────────────────────────────────────────────────
 set_perm_recursive "$MODPATH" root root 0755 0644
-chmod 755 "$MODPATH/service.sh"
+chmod 777 "$MODPATH/service.sh"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 if [ "$SUSFS_ACTIVE" = "true" ]; then
