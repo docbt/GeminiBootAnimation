@@ -47,12 +47,20 @@ build_variant() {
     # dm-verity is disabled, e.g. crDroid). Runs after every boot — safe to
     # call repeatedly (skips if sizes already match).
     cat > "$TMPDIR/service.sh" <<'SERVICESH'
-#!/sbin/sh
+#!/system/bin/sh
 # Gemini Boot Animation — direct-write fallback for KernelSU+SUSFS setups
 MODDIR="${0%/*}"
 SRC="$MODDIR/files"
 
 [ -f "$SRC/bootanimation.zip" ] || exit 0
+
+# Wait for full boot before attempting any write operations.
+# Without this, remount silently fails on KernelSU and the files are never
+# copied — causing the "needs 2 reboots" symptom.
+until [ "$(getprop sys.boot_completed)" = "1" ]; do
+    sleep 3
+done
+sleep 3
 
 our_size=$(stat -c %s "$SRC/bootanimation.zip" 2>/dev/null) || exit 0
 
@@ -64,14 +72,18 @@ try_write() {
     cur=$(stat -c %s "$dir/bootanimation.zip" 2>/dev/null) || cur=0
     [ "$cur" = "$our_size" ] && return 0
 
-    # Attempt remount rw
-    mount -o remount,rw "$dir" 2>/dev/null || return 1
+    # Try remounting: first the dir itself, then parent partition
+    local parent="${dir%/*}"
+    mount -o remount,rw "$dir"    2>/dev/null || \
+    mount -o remount,rw "$parent" 2>/dev/null || \
+    return 1
 
     cp "$SRC/bootanimation.zip"      "$dir/bootanimation.zip"
     cp "$SRC/bootanimation-dark.zip" "$dir/bootanimation-dark.zip"
     chmod 644 "$dir/bootanimation.zip" "$dir/bootanimation-dark.zip"
 
-    mount -o remount,ro "$dir" 2>/dev/null || true
+    mount -o remount,ro "$parent" 2>/dev/null || \
+    mount -o remount,ro "$dir"    2>/dev/null || true
 }
 
 try_write /product/media
