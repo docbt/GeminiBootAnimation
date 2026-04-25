@@ -1,9 +1,17 @@
-#!/sbin/sh
+#!/system/bin/sh
 # Gemini Boot Animation — direct-write fallback for KernelSU+SUSFS setups
 MODDIR="${0%/*}"
 SRC="$MODDIR/files"
 
 [ -f "$SRC/bootanimation.zip" ] || exit 0
+
+# Wait for full boot before attempting any write operations.
+# Without this, remount silently fails on KernelSU and the files are never
+# copied — causing the "needs 2 reboots" symptom.
+until [ "$(getprop sys.boot_completed)" = "1" ]; do
+    sleep 3
+done
+sleep 3
 
 our_size=$(stat -c %s "$SRC/bootanimation.zip" 2>/dev/null) || exit 0
 
